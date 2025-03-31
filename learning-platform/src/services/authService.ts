@@ -4,6 +4,7 @@ import pool from '../config/db';
 import { RowDataPacket } from 'mysql2';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { User } from '../utils/db';
 
 const SALT_ROUNDS = 10;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -19,107 +20,38 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-export interface User {
-  id?: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone_number: string;
-  password: string;
-  course: string;
-  tenth_marks: number;
-  twelfth_marks: number;
-  cpi: number;
-  year_of_study: number;
-  achievements?: string;
-  certifications?: string;
-  projects?: string;
-  interests: string;
-  created_at?: Date;
-  reset_password_token?: string;
-  reset_password_expires?: Date;
-}
-
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export const registerUser = async (userData: Omit<User, 'id' | 'created_at'>): Promise<User> => {
-  try {
-    // Hash password
-    const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS);
+export interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+}
 
-    // Insert user into database
-    const [result] = await pool.execute(
-      `INSERT INTO users (
-        first_name, last_name, email, phone_number, password, course,
-        tenth_marks, twelfth_marks, cpi, year_of_study,
-        achievements, certifications, projects, interests
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        userData.first_name,
-        userData.last_name,
-        userData.email,
-        userData.phone_number,
-        hashedPassword,
-        userData.course,
-        userData.tenth_marks,
-        userData.twelfth_marks,
-        userData.cpi,
-        userData.year_of_study,
-        userData.achievements || null,
-        userData.certifications || null,
-        userData.projects || null,
-        userData.interests
-      ]
-    );
+export async function loginUser(credentials: LoginCredentials): Promise<User> {
+  // Simulate API call
+  return {
+    id: '1',
+    name: 'Test User',
+    email: credentials.email,
+    password: '',
+    created_at: new Date(),
+  };
+}
 
-    const [newUser] = await pool.execute<RowDataPacket[]>(
-      'SELECT * FROM users WHERE id = ?',
-      [(result as any).insertId]
-    );
-
-    return newUser[0] as User;
-  } catch (error) {
-    console.error('Error registering user:', error);
-    throw error;
-  }
-};
-
-export const loginUser = async (credentials: LoginCredentials): Promise<{ user: User; token: string }> => {
-  try {
-    // Get user by email
-    const [users] = await pool.execute<RowDataPacket[]>(
-      'SELECT * FROM users WHERE email = ?',
-      [credentials.email]
-    );
-
-    if (users.length === 0) {
-      throw new Error('Invalid email or password');
-    }
-
-    const user = users[0] as User;
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(credentials.password, user.password);
-    if (!isValidPassword) {
-      throw new Error('Invalid email or password');
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
-    return { user, token };
-  } catch (error) {
-    console.error('Error logging in:', error);
-    throw error;
-  }
-};
+export async function registerUser(data: RegisterData): Promise<User> {
+  // Simulate API call
+  return {
+    id: '1',
+    name: data.name,
+    email: data.email,
+    password: '',
+    created_at: new Date(),
+  };
+}
 
 export const requestPasswordReset = async (email: string): Promise<void> => {
   try {

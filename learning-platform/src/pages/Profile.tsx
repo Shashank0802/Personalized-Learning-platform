@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   UserCircleIcon,
-  AcademicCapIcon,
   BookOpenIcon,
   TrophyIcon,
   ChartBarIcon,
@@ -24,6 +23,7 @@ import {
   type LearningTopic,
   type ChatMessage
 } from '../utils/db'
+import { useAuth } from '../contexts/AuthContext'
 
 interface Progress {
   overallProgress: number
@@ -33,11 +33,12 @@ interface Progress {
 }
 
 export default function Profile() {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [messageInput, setMessageInput] = useState('')
-  const [userProfile, setUserProfile] = useState<User | null>(null)
+  const [userProfile, setUserProfile] = useState<User | null>(user)
   const [achievements, setAchievements] = useState<Achievement[]>([])
   const [learningTopics, setLearningTopics] = useState<LearningTopic[]>([])
   const [progress, setProgress] = useState<Progress>({
@@ -141,6 +142,10 @@ export default function Profile() {
     }
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
@@ -151,8 +156,14 @@ export default function Profile() {
 
   if (!userProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
-        <div className="text-white">Error loading profile</div>
+      <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <h1 className="text-4xl font-extrabold text-white sm:text-5xl">
+              Profile not found
+            </h1>
+          </div>
+        </div>
       </div>
     )
   }
@@ -197,9 +208,9 @@ export default function Profile() {
                 </label>
               </div>
               <h2 className="mt-4 text-xl font-semibold text-white">
-                {userProfile.firstName} {userProfile.lastName}
+                {userProfile.name}
               </h2>
-              <p className="text-gray-400">@{userProfile.username}</p>
+              <p className="text-gray-400">{userProfile.email}</p>
             </div>
 
             {/* Navigation */}

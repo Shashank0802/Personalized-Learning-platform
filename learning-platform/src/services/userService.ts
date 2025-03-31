@@ -1,5 +1,5 @@
 import User from '../models/User';
-import mysql from 'mysql2/promise';
+import mysql, { ResultSetHeader } from 'mysql2/promise';
 import bcrypt from 'bcryptjs';
 
 const pool = mysql.createPool({
@@ -112,7 +112,7 @@ export const userService = {
         try {
             const hashedPassword = await bcrypt.hash(userData.password, 10);
             
-            const [result] = await pool.execute(
+            const [result] = await pool.execute<ResultSetHeader>(
                 `INSERT INTO users (
                     email, password, first_name, last_name, phone_number,
                     course, tenth_marks, twelfth_marks, cpi, year_of_study, interests
@@ -132,9 +132,8 @@ export const userService = {
                 ]
             );
 
-            const insertResult = result as mysql.InsertResult;
             return {
-                id: insertResult.insertId,
+                id: result.insertId,
                 ...userData,
                 password: undefined
             };

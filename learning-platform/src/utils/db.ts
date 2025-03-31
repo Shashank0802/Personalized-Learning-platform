@@ -13,17 +13,14 @@ const pool = mysql.createPool({
 
 export interface User {
   id: string
-  firstName: string
-  lastName: string
-  username: string
+  name: string
   email: string
-  profilePhoto: string | null
-  course: string
-  tenthMarks?: number
-  twelfthMarks?: number
-  currentCgpa?: number
-  achievements?: string
-  certifications?: string
+  password: string
+  created_at: Date
+  profilePhoto?: string
+  firstName?: string
+  lastName?: string
+  username?: string
 }
 
 export interface Achievement {
@@ -32,6 +29,7 @@ export interface Achievement {
   description: string
   icon: string
   achievedAt: Date
+  date: Date
 }
 
 export interface LearningTopic {
@@ -44,15 +42,88 @@ export interface LearningTopic {
 
 export interface ChatMessage {
   id: string
-  userId: string
-  message: string
+  user_id: string
+  content: string
+  created_at: Date
   isUser: boolean
-  createdAt: Date
+  text: string
+}
+
+export async function createUser(name: string, email: string, password: string): Promise<User> {
+  const id = uuidv4()
+  await pool.execute(
+    'INSERT INTO users (id, name, email, password) VALUES (?, ?, ?, ?)',
+    [id, name, email, password]
+  )
+  
+  const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+    'SELECT * FROM users WHERE id = ?',
+    [id]
+  )
+  
+  return rows[0] as User
+}
+
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+    'SELECT * FROM users WHERE email = ?',
+    [email]
+  )
+  
+  return (rows[0] as User) || null
+}
+
+export async function getUserById(id: string): Promise<User | null> {
+  const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+    'SELECT * FROM users WHERE id = ?',
+    [id]
+  )
+  
+  return (rows[0] as User) || null
+}
+
+export async function updateUser(id: string, updates: Partial<User>): Promise<User | null> {
+  const fields = Object.keys(updates)
+    .map(key => `${key} = ?`)
+    .join(', ')
+  
+  const values = [...Object.values(updates), id]
+  
+  await pool.execute(
+    `UPDATE users SET ${fields} WHERE id = ?`,
+    values
+  )
+  
+  return getUserById(id)
+}
+
+export async function createChatMessage(userId: string, content: string): Promise<ChatMessage> {
+  const id = uuidv4()
+  await pool.execute(
+    'INSERT INTO chat_messages (id, user_id, content) VALUES (?, ?, ?)',
+    [id, userId, content]
+  )
+  
+  const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+    'SELECT * FROM chat_messages WHERE id = ?',
+    [id]
+  )
+  
+  return rows[0] as ChatMessage
+}
+
+export async function getChatMessagesByUserId(userId: string): Promise<ChatMessage[]> {
+  const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+    'SELECT * FROM chat_messages WHERE user_id = ? ORDER BY created_at DESC',
+    [userId]
+  )
+  
+  return rows as ChatMessage[]
 }
 
 export async function getUserProfile(userId: string): Promise<User | null> {
   try {
-    const [rows] = await pool.execute(
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
       'SELECT * FROM users WHERE id = ?',
       [userId]
     )
@@ -65,7 +136,7 @@ export async function getUserProfile(userId: string): Promise<User | null> {
 
 export async function getUserAchievements(userId: string): Promise<Achievement[]> {
   try {
-    const [rows] = await pool.execute(`
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(`
       SELECT a.id, a.title, a.description, a.icon, ua.achieved_at
       FROM achievements a
       JOIN user_achievements ua ON a.id = ua.achievement_id
@@ -81,7 +152,7 @@ export async function getUserAchievements(userId: string): Promise<Achievement[]
 
 export async function getUserLearningTopics(userId: string): Promise<LearningTopic[]> {
   try {
-    const [rows] = await pool.execute(`
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(`
       SELECT 
         lt.id,
         lt.title,
@@ -103,11 +174,10 @@ export async function getUserLearningTopics(userId: string): Promise<LearningTop
 export async function updateUserProfile(user: Partial<User>): Promise<boolean> {
   try {
     const { id, ...updateData } = user
-    const [result] = await pool.execute(`
-      UPDATE users
-      SET ?
-      WHERE id = ?
-    `, [updateData, id])
+    await pool.execute(
+      'UPDATE users SET ? WHERE id = ?',
+      [updateData, id]
+    )
     return true
   } catch (error) {
     console.error('Error updating user profile:', error)
@@ -121,13 +191,10 @@ export async function updateUserProgress(
   progress: number
 ): Promise<boolean> {
   try {
-    await pool.execute(`
-      INSERT INTO user_progress (id, user_id, topic_id, progress)
-      VALUES (?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        progress = VALUES(progress),
-        last_accessed = CURRENT_TIMESTAMP
-    `, [uuidv4(), userId, topicId, progress])
+    await pool.execute(
+      'INSERT INTO user_progress (id, user_id, topic_id, progress) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE progress = VALUES(progress), last_accessed = CURRENT_TIMESTAMP',
+      [uuidv4(), userId, topicId, progress]
+    )
     return true
   } catch (error) {
     console.error('Error updating user progress:', error)
@@ -142,12 +209,12 @@ export async function saveChatMessage(
 ): Promise<ChatMessage | null> {
   try {
     const id = uuidv4()
-    await pool.execute(`
-      INSERT INTO chat_messages (id, user_id, message, is_user)
-      VALUES (?, ?, ?, ?)
-    `, [id, userId, message, isUser])
+    await pool.execute(
+      'INSERT INTO chat_messages (id, user_id, content, is_user) VALUES (?, ?, ?, ?)',
+      [id, userId, message, isUser]
+    )
 
-    const [rows] = await pool.execute(
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
       'SELECT * FROM chat_messages WHERE id = ?',
       [id]
     )
@@ -160,12 +227,10 @@ export async function saveChatMessage(
 
 export async function getChatHistory(userId: string): Promise<ChatMessage[]> {
   try {
-    const [rows] = await pool.execute(`
-      SELECT *
-      FROM chat_messages
-      WHERE user_id = ?
-      ORDER BY created_at ASC
-    `, [userId])
+    const [rows] = await pool.execute<mysql.RowDataPacket[]>(
+      'SELECT * FROM chat_messages WHERE user_id = ? ORDER BY created_at ASC',
+      [userId]
+    )
     return rows as ChatMessage[]
   } catch (error) {
     console.error('Error fetching chat history:', error)

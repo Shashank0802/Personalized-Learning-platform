@@ -41,10 +41,10 @@ export default function Lesson() {
             <div className="bg-gray-800 rounded-lg p-4 my-4">
               <pre className="text-sm text-gray-200">
                 <code>
-                  // Example code here
-                  function example() {
-                    console.log("Hello, World!");
-                  }
+                  {`// Example code here
+function example() {
+  console.log("Hello, World!");
+}`}
                 </code>
               </pre>
             </div>

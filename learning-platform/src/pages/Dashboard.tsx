@@ -8,11 +8,11 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center">
-          <h1 className="text-3xl font-extrabold text-white sm:text-4xl">
-            Welcome back, {user?.firstName || 'there'}!
+          <h1 className="text-4xl font-extrabold text-white sm:text-5xl">
+            Welcome back, {user?.name || 'there'}!
           </h1>
-          <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-300 sm:mt-4">
-            Your personalized learning dashboard
+          <p className="mt-3 text-xl text-gray-300">
+            Track your progress and continue learning
           </p>
         </div>
 

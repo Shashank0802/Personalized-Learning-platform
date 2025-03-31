@@ -1,75 +1,97 @@
-import React, { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import {
-  HomeIcon,
-  AcademicCapIcon,
-  BriefcaseIcon,
-  TrophyIcon,
-  DocumentTextIcon,
-  UserGroupIcon,
-  BookOpenIcon,
-  Bars3Icon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline'
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-const navigation = [
-  { name: 'Home', href: '/', icon: HomeIcon },
-  { name: 'Learning', href: '/learning', icon: AcademicCapIcon },
-  { name: 'Jobs', href: '/jobs', icon: BriefcaseIcon },
-  { name: 'Competitions', href: '/competitions', icon: TrophyIcon },
-  { name: 'Resume Builder', href: '/resume-builder', icon: DocumentTextIcon },
-  { name: 'Mentorship', href: '/mentorship', icon: UserGroupIcon },
-  { name: 'Blogs', href: '/blogs', icon: BookOpenIcon },
-]
-
-const Navbar = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const location = useLocation()
+export default function Navbar() {
+  const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-lg border-b border-white/10">
+    <nav className="bg-gray-900 border-b border-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <AcademicCapIcon className="h-8 w-8 text-primary-500" />
-            <span className="ml-2 text-xl font-bold text-white">Learning Platform</span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:items-center md:space-x-8">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'text-primary-500 bg-primary-500/10'
-                      : 'text-gray-300 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <item.icon className="h-5 w-5 mr-2" />
-                  {item.name}
-                </Link>
-              )
-            })}
+          <div className="flex items-center">
+            <Link to="/" className="text-white font-bold text-xl">
+              LearnPro
+            </Link>
           </div>
 
-          {/* Mobile menu button */}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
+              <Link
+                to="/learning"
+                className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Learning
+              </Link>
+              {user ? (
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    to="/profile"
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={logout}
+                    className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/auth"
+                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
+          </div>
+
           <div className="md:hidden">
             <button
-              type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-white/5 focus:outline-none"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
             >
               <span className="sr-only">Open main menu</span>
-              {mobileMenuOpen ? (
-                <XMarkIcon className="block h-6 w-6" />
+              {isOpen ? (
+                <svg
+                  className="block h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               ) : (
-                <Bars3Icon className="block h-6 w-6" />
+                <svg
+                  className="block h-6 w-6"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
               )}
             </button>
           </div>
@@ -77,38 +99,47 @@ const Navbar = () => {
       </div>
 
       {/* Mobile menu */}
-      <motion.div
-        initial={false}
-        animate={mobileMenuOpen ? 'open' : 'closed'}
-        variants={{
-          open: { opacity: 1, height: 'auto' },
-          closed: { opacity: 0, height: 0 },
-        }}
-        className="md:hidden bg-gray-900/95 backdrop-blur-lg border-b border-white/10"
-      >
-        <div className="px-2 pt-2 pb-3 space-y-1">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href
-            return (
+      {isOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <Link
+              to="/learning"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+            >
+              Learning
+            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/dashboard"
+                  className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/profile"
+                  className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={logout}
+                  className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
               <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActive
-                    ? 'text-primary-500 bg-primary-500/10'
-                    : 'text-gray-300 hover:text-white hover:bg-white/5'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
+                to="/auth"
+                className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
               >
-                <item.icon className="h-5 w-5 mr-2" />
-                {item.name}
+                Sign In
               </Link>
-            )
-          })}
+            )}
+          </div>
         </div>
-      </motion.div>
+      )}
     </nav>
-  )
-}
-
-export default Navbar 
+  );
+} 
