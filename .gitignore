@@ -6,9 +6,16 @@
 # Testing
 /coverage
 
+# Next.js
+/.next/
+/out/
+
 # Production
 /build
-/dist
+
+# Misc
+.DS_Store
+*.pem
 
 # Environment files
 .env
@@ -38,4 +45,11 @@ yarn-error.log*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db
+
+# Vercel
+.vercel
+
+# Typescript
+*.tsbuildinfo
+next-env.d.ts 
